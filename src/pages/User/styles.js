@@ -35,6 +35,12 @@ export const Bio = styled.Text`
   text-align: center;
 `;
 
+export const ViewActivity = styled.View`
+  flex: 1;
+  justify-content: center;
+  align-items: center;
+`;
+
 export const Star = styled.FlatList.attrs({
   showsVerticalsScrollIndicator: false,
 })`
