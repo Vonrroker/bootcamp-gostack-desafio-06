@@ -29,6 +29,7 @@ export const SubmitButton = styled(TouchableOpacity)`
   border-radius: 4px;
   margin-left: 10px;
   padding: 0 12px;
+  opacity: ${props => (props.loading ? 0.5 : 1)};
 `;
 
 export const List = styled.FlatList.attrs({
