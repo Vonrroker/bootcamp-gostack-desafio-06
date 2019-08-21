@@ -31,24 +31,62 @@ export default class User extends Component {
 
   state = {
     stars: [],
-    loading: false,
+    loading: true,
+    refreshing: false,
+    page: 1,
+    lastPage: 0,
   };
 
-  async componentDidMount() {
+  componentDidMount() {
+    this.load();
+  }
+
+  load = async (page = 1) => {
+    const { stars } = this.state;
+
     const { navigation } = this.props;
-
-    this.setState({ loading: true });
-
     const user = navigation.getParam('user');
 
-    const response = await api.get(`/users/${user.login}/starred`);
+    const response = await api.get(`/users/${user.login}/starred`, {
+      params: {
+        page,
+      },
+    });
 
-    this.setState({ stars: response.data, loading: false });
-  }
+    if (page === 1) {
+      const { link } = response.headers;
+      const regexLastPage = RegExp('\\d+(?=>; rel="last")');
+
+      this.setState({ lastPage: Number(link.match(regexLastPage)[0]) });
+    }
+
+    this.setState({
+      stars: page >= 2 ? [...stars, ...response.data] : response.data,
+      page,
+      loading: false,
+      refreshing: false,
+    });
+  };
+
+  loadMore = () => {
+    const { page } = this.state;
+
+    const nextPage = page + 1;
+
+    this.load(nextPage);
+  };
+
+  refreshList = () => {
+    this.setState({
+      loading: true,
+      refreshing: true,
+    });
+    this.load();
+  };
 
   render() {
     const { navigation } = this.props;
-    const { stars, loading } = this.state;
+    const { stars, loading, refreshing, page, lastPage } = this.state;
 
     const user = navigation.getParam('user');
 
@@ -68,6 +106,10 @@ export default class User extends Component {
           <Star
             data={stars}
             keyExtractor={star => String(star.id)}
+            onEndReachedThreshold={lastPage === page ? -1 : 0.2} // Carrega mais itens quando chegar em 20% do fim
+            onEndReached={this.loadMore} // Função que carrega mais itens
+            onRefresh={this.refreshList} // Função dispara quando o usuário arrasta a lista pra baixo
+            refreshing={refreshing} // Variável que armazena um estado true/false que
             renderItem={({ item }) => (
               <Starred>
                 <OwnerAvatar source={{ uri: item.owner.avatar_url }} />
